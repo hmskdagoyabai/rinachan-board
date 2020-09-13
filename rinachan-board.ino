@@ -23,6 +23,7 @@ int now_manualmode_emote = 0;   //selected emotion in manualmode
 int automode_preset = 0;        //selected preset in automode (only 0:dokipipo)
 int automode_playing = 0;       //playing flag
 int automode_waiting_emote = 0; //selected emotion in automode
+int gaming_mode = 0;            //0:nomal_mode 1:gaming_mode
 
 void setup()
 {
