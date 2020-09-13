@@ -1,6 +1,12 @@
 #include <FastLED.h>
 #include "faces.h"
 
+#include <IRremote.h>
+/* IR */
+#define RECV_PIN 11
+IRrecv irrecv(RECV_PIN); //受信用オブジェクト
+decode_results results;  //resultsに結果を格納
+
 /* PIN */
 #define SW1_PIN 5
 #define SW2_PIN 4
@@ -24,6 +30,8 @@ int automode_preset = 0;        //selected preset in automode (only 0:dokipipo)
 int automode_playing = 0;       //playing flag
 int automode_waiting_emote = 0; //selected emotion in automode
 int gaming_mode = 0;            //0:nomal_mode 1:gaming_mode
+CRGB color = RINA_PINK;         //color default:RINA_PINK
+static uint8_t hue;             //hue
 
 void setup()
 {
@@ -34,11 +42,14 @@ void setup()
   pinMode(SW3_PIN, INPUT_PULLUP);
   pinMode(SW4_PIN, INPUT_PULLUP);
   randomSeed(analogRead(0)); //乱数初期化
+  irrecv.enableIRIn();       //IR start
 }
 
 void loop()
 {
   operate_flags_by_switch();
+  delay(50);
+  operate_flags_by_ir();
   delay(50);
   operate_emotion_by_flag();
   delay(50);
@@ -109,6 +120,7 @@ void operate_flags_by_switch()
 /* フラグを読み取り表情操作 */
 void operate_emotion_by_flag()
 {
+  set_color();
   /* mode 1 : ランダム randmode */
   if (mode == 1)
   {
@@ -183,6 +195,20 @@ void operate_emotion_by_flag()
   }
 }
 
+/* 赤外線受信しフラグ操作 */
+void operate_flags_by_ir()
+{
+  if (irrecv.decode(&results))
+  {
+    gaming_mode = !gaming_mode;
+    //    mode = 2;                                       //マニュアルモード
+    //    now_manualmode_emote = random(now_preset_size); //表情を現在のプリセットからランダムに設定
+    irrecv.resume(); //受信機のリセット
+                     //    operate_emotion_by_flag();                      //表情反映
+    delay(300);
+  }
+}
+
 /* 選んだ表情に光らせる */
 void set_face(int preset_no, int face_no)
 {
@@ -195,7 +221,7 @@ void set_face(int preset_no, int face_no)
   //その後表情配列を読みON
   for (int i = 0; i < size; i++)
   {
-    leds[emotion[i]] = RINA_PINK;
+    leds[emotion[i]] = color;
   }
   FastLED.show();
 }
@@ -206,6 +232,21 @@ void set_black()
   for (int i = 0; i < NUM_LEDS; i++)
   {
     leds[i] = 0x000000;
+  }
+}
+
+/* 色操作 */
+void set_color()
+{
+  if (gaming_mode)
+  {
+    color = CHSV(hue, 255, 255);
+
+    hue += 10;
+  }
+  else
+  {
+    color = RINA_PINK;
   }
 }
 
